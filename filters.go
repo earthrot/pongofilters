@@ -16,6 +16,7 @@ func init() {
 	pongo2.RegisterFilter("printdatehuman", filterPrintDateHuman)
 	pongo2.RegisterFilter("stom", filterStoM)
 	pongo2.RegisterFilter("sanitizefile", filterSanitizeFile)
+	pongo2.RegisterFilter("filesize", filterFileSize)
 }
 
 func filterToTime(in *pongo2.Value, param *pongo2.Value) (*pongo2.Value, *pongo2.Error) {
@@ -141,6 +142,65 @@ func filterSanitizeFile(in *pongo2.Value, param *pongo2.Value) (*pongo2.Value, *
 	}
 
 	val = strings.Replace(val, "/", "_", -1)
+
+	return pongo2.AsSafeValue(val), nil
+}
+
+func filterFileSize(in *pongo2.Value, param *pongo2.Value) (*pongo2.Value, *pongo2.Error) {
+	val := ""
+	var intval int64 = -1
+	switch v := in.Interface().(type) {
+	case int:
+		intval = int64(v)
+	case int16:
+		intval = int64(v)
+	case int32:
+		intval = int64(v)
+	case int64:
+		intval = v
+	case sql.NullInt16:
+		if v.Valid {
+			intval = int64(v.Int16)
+		}
+	case sql.NullInt32:
+		if v.Valid {
+			intval = int64(v.Int32)
+		}
+	case sql.NullInt64:
+		if v.Valid {
+			intval = v.Int64
+		}
+	case pgtype.Int2:
+		if v.Valid {
+			intval = int64(v.Int16)
+		}
+	case pgtype.Int4:
+		if v.Valid {
+			intval = int64(v.Int32)
+		}
+	case pgtype.Int8:
+		if v.Valid {
+			intval = v.Int64
+		}
+	}
+
+	if intval >= 0 {
+		unit := "B"
+		size := float64(intval)
+		if size >= 1024 {
+			size /= 1024
+			unit = "KB"
+		}
+		if size >= 1024 {
+			size /= 1024
+			unit = "MB"
+		}
+		if size >= 1024 {
+			size /= 1024
+			unit = "GB"
+		}
+		val = fmt.Sprintf("%.1f %s", size, unit)
+	}
 
 	return pongo2.AsSafeValue(val), nil
 }
