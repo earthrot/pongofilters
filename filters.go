@@ -46,10 +46,15 @@ func filterToTime(in *pongo2.Value, param *pongo2.Value) (*pongo2.Value, *pongo2
 		}
 	}
 
-	val := fmt.Sprintf("%02d:%02d", seconds/60, seconds%60)
-	if seconds > 3600 {
-		val = fmt.Sprintf("%02d:%s", seconds/3600, val)
+	val := ""
+
+	if seconds > 60*60 {
+		hours := seconds / (60 * 60)
+		seconds -= hours * 60 * 60
+		val = fmt.Sprintf("%02d:", hours)
 	}
+
+	val = fmt.Sprintf("%s%02d:%02d", val, seconds/60, seconds%60)
 
 	return pongo2.AsSafeValue(val), nil
 }
